@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Upload, X, Eye, EyeOff, Info } from 'lucide-react';
 import { api } from '../api/client';
-import { useLeafletMap, addTileLayer, createLocationIcon } from '../hooks/useLeafletMap';
+import { useLeafletMap, createLocationIcon, L } from '../hooks/useLeafletMap';
 
 const DISTRICTS = [
   'Trujillo', 'El Porvenir', 'Florencia de Mora', 'Huanchaco',
@@ -34,11 +34,14 @@ export default function CreateReport() {
     api.categories.list().then(d => setCategs(d.categories || [])).catch(() => {});
   }, []);
 
-  // Registrar click en el mapa una vez que el paso 2 esté activo
+  // Cuando el usuario llega al paso 2, forzar repintado del mapa
+  // (el contenedor estaba oculto y Leaflet no conocía su tamaño real)
   useEffect(() => {
     if (step !== 2) return;
     const map = mapRef.current;
-    if (!map || !window.L) return;
+    if (!map) return;
+
+    setTimeout(() => map.invalidateSize(), 50);
 
     const onClick = (e) => {
       const { lat, lng } = e.latlng;
@@ -46,7 +49,7 @@ export default function CreateReport() {
       if (markerRef.current) {
         markerRef.current.setLatLng([lat, lng]);
       } else {
-        markerRef.current = window.L.marker([lat, lng], {
+        markerRef.current = L.marker([lat, lng], {
           icon: createLocationIcon(),
         }).addTo(map);
       }
@@ -223,34 +226,34 @@ export default function CreateReport() {
         )}
 
         {/* ── PASO 2: Mapa Leaflet ──────────────────────────── */}
-        {step === 2 && (
-          <div>
-            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl mb-4">
-              <Info size={14} className="text-blue-600 flex-shrink-0" />
-              <p className="text-xs text-blue-700 font-body">
-                Haz clic en el mapa para marcar la ubicación exacta del problema
-              </p>
-            </div>
-
-            {/* Contenedor del mapa Leaflet */}
-            <div
-              ref={containerRef}
-              className="w-full rounded-xl overflow-hidden border border-navy-800/10"
-              style={{ height: 380 }}
-            />
-
-            {form.latitude && (
-              <p className="text-xs text-emerald-600 font-body mt-2 flex items-center gap-1">
-                ✓ Ubicación marcada: {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
-              </p>
-            )}
-            {!form.latitude && (
-              <p className="text-xs text-navy-800/40 font-body mt-2 flex items-center gap-1">
-                <MapPin size={11} /> Ninguna ubicación marcada aún
-              </p>
-            )}
+        {/* El contenedor del mapa SIEMPRE está en el DOM para que Leaflet
+            pueda inicializarse; se oculta visualmente cuando no es el paso 2 */}
+        <div style={{ display: step === 2 ? 'block' : 'none' }}>
+          <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl mb-4">
+            <Info size={14} className="text-blue-600 flex-shrink-0" />
+            <p className="text-xs text-blue-700 font-body">
+              Haz clic en el mapa para marcar la ubicación exacta del problema
+            </p>
           </div>
-        )}
+
+          {/* Contenedor del mapa Leaflet */}
+          <div
+            ref={containerRef}
+            className="w-full rounded-xl overflow-hidden border border-navy-800/10"
+            style={{ height: 380 }}
+          />
+
+          {form.latitude && (
+            <p className="text-xs text-emerald-600 font-body mt-2 flex items-center gap-1">
+              ✓ Ubicación marcada: {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
+            </p>
+          )}
+          {!form.latitude && (
+            <p className="text-xs text-navy-800/40 font-body mt-2 flex items-center gap-1">
+              <MapPin size={11} /> Ninguna ubicación marcada aún
+            </p>
+          )}
+        </div>
 
         {/* ── PASO 3: Foto ──────────────────────────────────── */}
         {step === 3 && (
