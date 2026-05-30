@@ -24,8 +24,8 @@ export default function CreateReport() {
     district: 'Trujillo', address: '',
     latitude: null, longitude: null, is_anonymous: false,
   });
-  const [image,        setImage]       = useState(null);
-  const [preview,      setPreview]     = useState(null);
+  const [files,        setFiles]       = useState([]);
+  const [previews,     setPreviews]    = useState([]);
   const [categories,   setCategs]      = useState([]);
   const [loading,      setLoading]     = useState(false);
   const [isLocating,   setIsLocating]  = useState(false);
@@ -64,11 +64,28 @@ export default function CreateReport() {
     return () => map.off('click', onClick);
   }, [step]);
 
-  function handleImage(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    setImage(file);
-    setPreview(URL.createObjectURL(file));
+  function handleFiles(e) {
+    const selected = Array.from(e.target.files);
+    if (!selected.length) return;
+    
+    // Check total limit (max 4 files)
+    if (files.length + selected.length > 4) {
+      alert('Puedes subir un máximo de 4 archivos');
+      return;
+    }
+
+    setFiles(prev => [...prev, ...selected]);
+    
+    const newPreviews = selected.map(f => ({
+      url: URL.createObjectURL(f),
+      type: f.type.startsWith('video/') ? 'video' : 'image'
+    }));
+    setPreviews(prev => [...prev, ...newPreviews]);
+  }
+
+  function removeFile(index) {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviews(prev => prev.filter((_, i) => i !== index));
   }
 
   function validate() {
@@ -121,11 +138,11 @@ export default function CreateReport() {
     setImageError('');
     try {
       const report = await api.reports.create(form);
-      if (image) {
+      if (files.length > 0) {
         try {
-          await api.reports.uploadImage(report.id, image);
+          await api.reports.uploadMedia(report.id, files);
         } catch (imgErr) {
-          console.error('Error subiendo imagen a Cloudinary:', imgErr.message);
+          console.error('Error subiendo multimedia:', imgErr.message);
           // El reporte ya fue creado, navegamos pero mostramos el error
           setImageError(imgErr.message);
           setLoading(false);
@@ -166,7 +183,7 @@ export default function CreateReport() {
 
       {/* Steps */}
       <div className="flex items-center gap-2 mb-8">
-        {[['1','Información'],['2','Ubicación'],['3','Foto']].map(([n, label], i) => (
+        {[['1','Información'],['2','Ubicación'],['3','Evidencias']].map(([n, label], i) => (
           <div key={n} className="flex items-center gap-2 flex-1">
             <button
               onClick={() => i + 1 < step && setStep(i + 1)}
@@ -311,34 +328,45 @@ export default function CreateReport() {
           )}
         </div>
 
-        {/* ── PASO 3: Foto ──────────────────────────────────── */}
+        {/* ── PASO 3: Multimedia ────────────────────────────── */}
         {step === 3 && (
           <div>
             <label className="label">
-              Foto del problema{' '}
-              <span className="text-navy-800/40 font-normal">(opcional)</span>
+              Fotos o Videos del problema{' '}
+              <span className="text-slate-400 font-normal">(opcional, máx 4)</span>
             </label>
-            {!preview ? (
-              <label className="block w-full border-2 border-dashed border-navy-800/20 rounded-xl p-10 text-center cursor-pointer hover:border-navy-800/40 transition-colors">
-                <Upload size={24} className="text-navy-800/30 mx-auto mb-3" />
-                <p className="font-display font-semibold text-sm text-navy-800/60">
-                  Sube una foto del problema
-                </p>
-                <p className="text-xs text-navy-800/40 mt-1 font-body">
-                  JPG, PNG o WebP · Máx 5MB
-                </p>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImage} />
-              </label>
-            ) : (
-              <div className="relative rounded-xl overflow-hidden">
-                <img src={preview} alt="Preview" className="w-full max-h-72 object-cover" />
-                <button
-                  onClick={() => { setImage(null); setPreview(null); }}
-                  className="absolute top-2 right-2 w-7 h-7 bg-navy-900/70 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                >
-                  <X size={13} />
-                </button>
+            
+            {previews.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {previews.map((p, i) => (
+                  <div key={i} className="relative rounded-lg overflow-hidden border border-slate-200 aspect-video bg-slate-50">
+                    {p.type === 'video' ? (
+                      <video src={p.url} className="w-full h-full object-cover" controls />
+                    ) : (
+                      <img src={p.url} alt="Preview" className="w-full h-full object-cover" />
+                    )}
+                    <button
+                      onClick={() => removeFile(i)}
+                      className="absolute top-1 right-1 w-6 h-6 bg-slate-900/70 text-white rounded-full flex items-center justify-center hover:bg-red-500 transition-colors"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
               </div>
+            )}
+
+            {files.length < 4 && (
+              <label className="block w-full border-2 border-dashed border-slate-200 rounded-lg p-8 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/50 transition-all">
+                <Upload size={24} className="text-slate-400 mx-auto mb-2" />
+                <p className="font-display font-medium text-sm text-slate-600">
+                  Subir fotos o videos
+                </p>
+                <p className="text-xs text-slate-400 mt-1 font-body">
+                  JPG, PNG, WebP o MP4 · Máx 20MB c/u
+                </p>
+                <input type="file" accept="image/*,video/mp4,video/webm" multiple className="hidden" onChange={handleFiles} />
+              </label>
             )}
           </div>
         )}
@@ -354,8 +382,8 @@ export default function CreateReport() {
           {step < 3 ? (
             <button onClick={nextStep} className="btn-primary">Continuar →</button>
           ) : (
-            <button onClick={submit} disabled={loading} className="btn-gold disabled:opacity-50">
-              {loading ? 'Publicando…' : '📢 Publicar reporte'}
+            <button onClick={submit} disabled={loading} className="btn-primary disabled:opacity-50">
+              {loading ? 'Publicando…' : 'Publicar reporte'}
             </button>
           )}
         </div>

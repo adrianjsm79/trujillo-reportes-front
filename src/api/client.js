@@ -36,11 +36,13 @@ export const api = {
     create: (body)        => request('/api/reports', { method: 'POST', body: JSON.stringify(body) }),
     update: (id, body)    => request(`/api/reports/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     delete: (id)          => request(`/api/reports/${id}`, { method: 'DELETE' }),
-    uploadImage: (id, file) => {
+    uploadMedia: (id, files) => {
       const form = new FormData();
-      form.append('image', file);
+      for (let i = 0; i < files.length; i++) {
+        form.append('media', files[i]);
+      }
       const token = getToken();
-      return fetch(`${BASE_URL}/api/reports/${id}/image`, {
+      return fetch(`${BASE_URL}/api/reports/${id}/media`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: form,

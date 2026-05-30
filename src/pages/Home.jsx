@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, TrendingUp, CheckCircle, Clock, AlertTriangle, Search } from 'lucide-react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import ReportCard  from '../components/ReportCard';
+import FeedPost  from '../components/FeedPost';
 import FilterBar   from '../components/FilterBar';
 import Pagination  from '../components/Pagination';
 
@@ -91,21 +91,27 @@ export default function Home() {
       </div>
 
       {/* Feed */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-slate-50 min-h-screen">
+        <div className="mb-6 max-w-2xl mx-auto">
           <FilterBar filters={filters} onChange={setFilters} />
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="card animate-pulse overflow-hidden">
-                <div className="aspect-[16/9] bg-navy-800/8" />
-                <div className="p-5 space-y-3">
-                  <div className="h-3 bg-navy-800/8 rounded-full w-1/2" />
-                  <div className="h-4 bg-navy-800/8 rounded-full w-full" />
-                  <div className="h-3 bg-navy-800/8 rounded-full w-3/4" />
+          <div className="flex flex-col gap-6 max-w-2xl mx-auto">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-xl shadow-sm border border-slate-200 animate-pulse overflow-hidden">
+                <div className="p-4 flex gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-200" />
+                  <div className="space-y-2 flex-1 pt-1">
+                    <div className="h-4 bg-slate-200 rounded w-1/4" />
+                    <div className="h-3 bg-slate-200 rounded w-1/6" />
+                  </div>
                 </div>
+                <div className="px-4 pb-4 space-y-3">
+                  <div className="h-4 bg-slate-200 rounded w-3/4" />
+                  <div className="h-3 bg-slate-200 rounded w-full" />
+                </div>
+                <div className="aspect-video bg-slate-100" />
               </div>
             ))}
           </div>
@@ -117,13 +123,15 @@ export default function Home() {
           </div>
         ) : (
           <>
-            <p className="text-xs text-navy-800/40 font-body mb-4">
+            <p className="text-xs text-slate-500 font-body mb-4 max-w-2xl mx-auto text-center">
               {pagination.total} reporte{pagination.total !== 1 ? 's' : ''} encontrado{pagination.total !== 1 ? 's' : ''}
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {reports.map((r, i) => <ReportCard key={r.id} report={r} index={i} />)}
+            <div className="flex flex-col max-w-2xl mx-auto">
+              {reports.map((r, i) => <FeedPost key={r.id} report={r} index={i} />)}
             </div>
-            <Pagination page={filters.page} totalPages={pagination.total_pages} onChange={p => setFilters(f => ({ ...f, page: p }))} />
+            <div className="max-w-2xl mx-auto">
+              <Pagination page={filters.page} totalPages={pagination.total_pages} onChange={p => setFilters(f => ({ ...f, page: p }))} />
+            </div>
           </>
         )}
       </div>
