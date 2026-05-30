@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,9 +12,9 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3, h4, h5 { @apply font-display; }
+  h1, h2, h3, h4, h5 { @apply font-display tracking-tight; }
 
-  ::selection { @apply bg-gold-400/30 text-navy-900; }
+  ::selection { @apply bg-primary-100 text-primary-900; }
 
   ::-webkit-scrollbar       { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -22,38 +24,38 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center gap-2 bg-navy-800 hover:bg-navy-700 active:bg-navy-900
-           text-white font-display font-semibold text-sm px-5 py-2.5 rounded-xl
-           transition-all duration-200 shadow-sm hover:shadow-md
-           focus:outline-none focus:ring-2 focus:ring-navy-600 focus:ring-offset-2;
+    @apply inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800
+           text-white font-display font-medium text-sm px-4 py-2 rounded-md
+           transition-all duration-200 shadow-sm
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center gap-2 bg-white hover:bg-navy-950/5 active:bg-navy-950/10
-           text-navy-800 font-display font-semibold text-sm px-5 py-2.5 rounded-xl
-           border border-navy-800/15 transition-all duration-200
-           focus:outline-none focus:ring-2 focus:ring-navy-600 focus:ring-offset-2;
+    @apply inline-flex items-center gap-2 bg-white hover:bg-slate-50 active:bg-slate-100
+           text-slate-700 font-display font-medium text-sm px-4 py-2 rounded-md
+           border border-slate-200 transition-all duration-200 shadow-sm
+           focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2;
   }
 
   .btn-gold {
-    @apply inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-600 active:bg-gold-600
-           text-white font-display font-semibold text-sm px-5 py-2.5 rounded-xl
-           transition-all duration-200 shadow-sm hover:shadow-md
-           focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2;
+    @apply inline-flex items-center gap-2 bg-navy-800 hover:bg-navy-900 active:bg-navy-950
+           text-white font-display font-medium text-sm px-4 py-2 rounded-md
+           transition-all duration-200 shadow-sm
+           focus:outline-none focus:ring-2 focus:ring-navy-800 focus:ring-offset-2;
   }
 
   .input {
-    @apply w-full bg-white border border-navy-800/15 rounded-xl px-4 py-2.5
-           font-body text-sm text-navy-900 placeholder:text-navy-900/40
-           focus:outline-none focus:ring-2 focus:ring-navy-800/30 focus:border-navy-800/40
-           transition-all duration-200;
+    @apply w-full bg-white border border-slate-200 rounded-md px-3 py-2
+           font-body text-sm text-slate-900 placeholder:text-slate-400
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+           transition-all duration-200 shadow-sm;
   }
 
-  .label { @apply block font-display font-semibold text-sm text-navy-800 mb-1.5; }
+  .label { @apply block font-display font-medium text-sm text-slate-700 mb-1.5; }
 
   .card {
-    @apply bg-card rounded-2xl shadow-card border border-navy-800/5
-           transition-all duration-300;
+    @apply bg-card rounded-lg shadow-card border border-slate-200
+           transition-all duration-200;
   }
 
   .card-hover { @apply hover:shadow-hover hover:-translate-y-0.5; }
@@ -63,8 +65,8 @@
   }
 
   .badge {
-    @apply inline-flex items-center gap-1 text-xs font-display font-semibold
-           px-2.5 py-1 rounded-full;
+    @apply inline-flex items-center gap-1.5 text-xs font-display font-medium
+           px-2.5 py-0.5 rounded-md border;
   }
 
   /* Animaciones con delay para listas */

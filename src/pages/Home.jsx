@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, TrendingUp, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Plus, TrendingUp, CheckCircle, Clock, AlertTriangle, Search } from 'lucide-react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import ReportCard  from '../components/ReportCard';
@@ -46,33 +46,33 @@ export default function Home() {
       <div className="bg-navy-900 relative overflow-hidden">
         {/* Decoración */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-gold-500/5 blur-3xl" />
+          <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-primary-500/5 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] rounded-full bg-navy-700/40 blur-3xl" />
         </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 bg-gold-500/10 border border-gold-500/20 rounded-full px-3.5 py-1.5 mb-5">
-              <span className="w-1.5 h-1.5 rounded-full bg-gold-500 animate-pulse-dot" />
-              <span className="text-gold-400 text-xs font-display font-semibold">Plataforma activa en Trujillo</span>
+            <div className="inline-flex items-center gap-2 bg-primary-500/10 border border-primary-500/20 rounded-full px-3.5 py-1.5 mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse-dot" />
+              <span className="text-primary-400 text-xs font-display font-medium">Plataforma activa en Trujillo</span>
             </div>
-            <h1 className="text-white font-display font-bold text-4xl sm:text-5xl leading-tight tracking-tight mb-4">
+            <h1 className="text-white font-display font-bold text-4xl sm:text-5xl leading-tight tracking-tight mb-5">
               Reporta problemas<br />
-              <span className="text-gold-400">en tu comunidad</span>
+              <span className="text-primary-400">en tu comunidad</span>
             </h1>
-            <p className="text-white/60 font-body text-base leading-relaxed mb-8 max-w-lg">
+            <p className="text-slate-300 font-body text-base leading-relaxed mb-8 max-w-lg">
               Baches, alumbrado, basura, seguridad — repórtalo de forma anónima o con tu cuenta y dale seguimiento hasta que se resuelva.
             </p>
             <div className="flex flex-wrap gap-3">
               {user ? (
-                <Link to="/nuevo" className="btn-gold">
+                <Link to="/nuevo" className="btn-primary">
                   <Plus size={16} /> Nuevo Reporte
                 </Link>
               ) : (
-                <Link to="/registro" className="btn-gold">
-                  <Plus size={16} /> Crear cuenta gratis
+                <Link to="/nuevo" className="btn-primary">
+                  <Plus size={16} /> Hacer un reporte
                 </Link>
               )}
-              <Link to="/mapa" className="btn-secondary border-white/20 text-white hover:bg-white/10">
+              <Link to="/mapa" className="btn-secondary border-slate-700 bg-slate-800 text-white hover:bg-slate-700">
                 Ver en el mapa
               </Link>
             </div>
@@ -110,10 +110,10 @@ export default function Home() {
             ))}
           </div>
         ) : reports.length === 0 ? (
-          <div className="text-center py-20">
-            <span className="text-5xl mb-4 block">🔍</span>
-            <p className="font-display font-semibold text-navy-800/60 text-lg">No se encontraron reportes</p>
-            <p className="text-sm text-navy-800/40 mt-1">Intenta con otros filtros o sé el primero en reportar.</p>
+          <div className="text-center py-20 bg-white rounded-lg border border-slate-200 shadow-sm">
+            <Search size={40} className="text-slate-300 mx-auto mb-4" />
+            <p className="font-display font-semibold text-slate-700 text-lg">No se encontraron reportes</p>
+            <p className="text-sm text-slate-500 mt-1">Intenta con otros filtros o sé el primero en reportar.</p>
           </div>
         ) : (
           <>
@@ -131,14 +131,14 @@ export default function Home() {
   );
 }
 
-function StatCard({ icon, value, label, color = 'text-gold-400' }) {
+function StatCard({ icon, value, label, color = 'text-primary-400' }) {
   return (
-    <div className="bg-white/5 border border-white/8 rounded-xl px-4 py-3.5 animate-fade-up">
-      <div className={`flex items-center gap-1.5 ${color} mb-1`}>
+    <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-4 animate-fade-up">
+      <div className={`flex items-center gap-2 ${color} mb-1.5`}>
         {icon}
-        <span className="font-display font-bold text-xl">{value ?? '—'}</span>
+        <span className="font-display font-semibold text-2xl">{value ?? '—'}</span>
       </div>
-      <p className="text-white/50 text-xs font-body">{label}</p>
+      <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">{label}</p>
     </div>
   );
 }

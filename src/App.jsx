@@ -33,7 +33,7 @@ export default function App() {
           <Route path="/reporte/:id" element={<ReportDetail />} />
           <Route path="/login"    element={<Login />} />
           <Route path="/registro" element={<Register />} />
-          <Route path="/nuevo"    element={<PrivateRoute><CreateReport /></PrivateRoute>} />
+          <Route path="/nuevo"    element={<CreateReport />} />
           <Route path="/mis-reportes" element={<PrivateRoute><MyReports /></PrivateRoute>} />
           <Route path="/admin"    element={<AdminRoute><AdminPanel /></AdminRoute>} />
           <Route path="*"         element={<Navigate to="/" replace />} />

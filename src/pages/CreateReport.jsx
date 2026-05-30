@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Upload, X, Eye, EyeOff, Info } from 'lucide-react';
+import { MapPin, Upload, X, Eye, EyeOff, Info, LocateFixed } from 'lucide-react';
 import { api } from '../api/client';
 import { useLeafletMap, createLocationIcon, L } from '../hooks/useLeafletMap';
+import { getCategoryIcon } from '../utils/categoryIcons';
 
 const DISTRICTS = [
   'Trujillo', 'El Porvenir', 'Florencia de Mora', 'Huanchaco',
@@ -23,12 +24,14 @@ export default function CreateReport() {
     district: 'Trujillo', address: '',
     latitude: null, longitude: null, is_anonymous: false,
   });
-  const [image,      setImage]   = useState(null);
-  const [preview,    setPreview] = useState(null);
-  const [categories, setCategs]  = useState([]);
-  const [loading,    setLoading] = useState(false);
-  const [errors,     setErrors]  = useState({});
-  const [step,       setStep]    = useState(1);
+  const [image,        setImage]       = useState(null);
+  const [preview,      setPreview]     = useState(null);
+  const [categories,   setCategs]      = useState([]);
+  const [loading,      setLoading]     = useState(false);
+  const [isLocating,   setIsLocating]  = useState(false);
+  const [errors,       setErrors]      = useState({});
+  const [step,         setStep]        = useState(1);
+  const [imageError,   setImageError]  = useState('');
 
   useEffect(() => {
     api.categories.list().then(d => setCategs(d.categories || [])).catch(() => {});
@@ -76,6 +79,38 @@ export default function CreateReport() {
     return e;
   }
 
+  function getUserLocation() {
+    if (!navigator.geolocation) {
+      alert('Tu navegador no soporta geolocalización');
+      return;
+    }
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setIsLocating(false);
+        const { latitude, longitude } = pos.coords;
+        setForm(f => ({ ...f, latitude, longitude }));
+        
+        const map = mapRef.current;
+        if (map) {
+          map.setView([latitude, longitude], 16);
+          if (markerRef.current) {
+            markerRef.current.setLatLng([latitude, longitude]);
+          } else {
+            markerRef.current = L.marker([latitude, longitude], {
+              icon: createLocationIcon(),
+            }).addTo(map);
+          }
+        }
+      },
+      (err) => {
+        setIsLocating(false);
+        alert('No se pudo obtener tu ubicación: ' + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
   async function submit() {
     if (!form.latitude || !form.longitude) {
       alert('Por favor marca la ubicación del problema en el mapa');
@@ -83,10 +118,20 @@ export default function CreateReport() {
       return;
     }
     setLoading(true);
+    setImageError('');
     try {
       const report = await api.reports.create(form);
       if (image) {
-        try { await api.reports.uploadImage(report.id, image); } catch {}
+        try {
+          await api.reports.uploadImage(report.id, image);
+        } catch (imgErr) {
+          console.error('Error subiendo imagen a Cloudinary:', imgErr.message);
+          // El reporte ya fue creado, navegamos pero mostramos el error
+          setImageError(imgErr.message);
+          setLoading(false);
+          navigate(`/reporte/${report.id}`);
+          return;
+        }
       }
       navigate(`/reporte/${report.id}`);
     } catch (err) {
@@ -126,16 +171,16 @@ export default function CreateReport() {
             <button
               onClick={() => i + 1 < step && setStep(i + 1)}
               className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-display font-bold transition-all
-                ${step === i+1 ? 'bg-navy-800 text-white' : step > i+1 ? 'bg-emerald-500 text-white' : 'bg-navy-800/10 text-navy-800/40'}`}
+                ${step === i+1 ? 'bg-primary-600 text-white' : step > i+1 ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}
             >
               {step > i + 1 ? '✓' : n}
             </button>
             <span className={`text-xs font-display font-semibold hidden sm:block
-              ${step === i+1 ? 'text-navy-800' : 'text-navy-800/40'}`}>
+              ${step === i+1 ? 'text-slate-800' : 'text-slate-400'}`}>
               {label}
             </span>
             {i < 2 && (
-              <div className={`flex-1 h-px ${step > i+1 ? 'bg-emerald-400' : 'bg-navy-800/10'}`} />
+              <div className={`flex-1 h-px ${step > i+1 ? 'bg-emerald-400' : 'bg-slate-200'}`} />
             )}
           </div>
         ))}
@@ -164,12 +209,12 @@ export default function CreateReport() {
                 {categories.map(c => (
                   <button key={c.id} type="button"
                     onClick={() => set('category_id', c.id.toString())}
-                    className={`p-3 rounded-xl border text-center transition-all
+                    className={`p-3 rounded-lg border text-center transition-all flex flex-col items-center justify-center gap-1
                       ${form.category_id === c.id.toString()
-                        ? 'bg-navy-800 border-navy-800 text-white'
-                        : 'bg-white border-navy-800/15 hover:border-navy-800/40 text-navy-800'}`}>
-                    <div className="text-xl mb-1">{c.icon}</div>
-                    <div className="text-xs font-display font-semibold leading-tight">{c.name}</div>
+                        ? 'bg-primary-50 border-primary-500 text-primary-700'
+                        : 'bg-white border-slate-200 hover:border-slate-300 text-slate-600'}`}>
+                    <div className="mb-1">{getCategoryIcon(c.name, 24)}</div>
+                    <div className="text-xs font-display font-medium leading-tight">{c.name}</div>
                   </button>
                 ))}
               </div>
@@ -185,7 +230,7 @@ export default function CreateReport() {
                 onChange={e => set('description', e.target.value)}
                 maxLength={2000}
               />
-              <p className="text-xs text-navy-800/30 mt-1 text-right">{form.description.length}/2000</p>
+              <p className="text-xs text-slate-400 mt-1 text-right">{form.description.length}/2000</p>
               {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
             </div>
 
@@ -205,21 +250,21 @@ export default function CreateReport() {
 
             {/* Toggle anonimato */}
             <div className="flex items-center justify-between p-4 bg-navy-800/4 rounded-xl">
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3">
                 {form.is_anonymous
-                  ? <EyeOff size={16} className="text-navy-700 mt-0.5 flex-shrink-0" />
-                  : <Eye    size={16} className="text-navy-700 mt-0.5 flex-shrink-0" />
+                  ? <EyeOff size={16} className="text-slate-500 mt-0.5 flex-shrink-0" />
+                  : <Eye    size={16} className="text-primary-600 mt-0.5 flex-shrink-0" />
                 }
                 <div>
-                  <p className="font-display font-semibold text-sm text-navy-800">Reporte anónimo</p>
-                  <p className="text-xs text-navy-800/50 font-body">Tu nombre no aparecerá en el reporte</p>
+                  <p className="font-display font-medium text-sm text-slate-800">Reporte anónimo</p>
+                  <p className="text-xs text-slate-500 font-body">Tu nombre no aparecerá en el reporte</p>
                 </div>
               </div>
               <button type="button" onClick={() => set('is_anonymous', !form.is_anonymous)}
                 className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0
-                  ${form.is_anonymous ? 'bg-navy-800' : 'bg-navy-800/20'}`}>
+                  ${form.is_anonymous ? 'bg-primary-600' : 'bg-slate-200'}`}>
                 <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all
-                  ${form.is_anonymous ? 'left-6' : 'left-1'}`} />
+                  ${form.is_anonymous ? 'left-6' : 'left-1 shadow-sm'}`} />
               </button>
             </div>
           </>
@@ -229,11 +274,22 @@ export default function CreateReport() {
         {/* El contenedor del mapa SIEMPRE está en el DOM para que Leaflet
             pueda inicializarse; se oculta visualmente cuando no es el paso 2 */}
         <div style={{ display: step === 2 ? 'block' : 'none' }}>
-          <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl mb-4">
-            <Info size={14} className="text-blue-600 flex-shrink-0" />
-            <p className="text-xs text-blue-700 font-body">
-              Haz clic en el mapa para marcar la ubicación exacta del problema
-            </p>
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="flex-1 flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+              <Info size={14} className="text-blue-600 flex-shrink-0" />
+              <p className="text-xs text-blue-700 font-body">
+                Haz clic en el mapa para marcar la ubicación exacta del problema
+              </p>
+            </div>
+            <button 
+              type="button" 
+              onClick={getUserLocation}
+              disabled={isLocating}
+              className="btn-secondary whitespace-nowrap justify-center"
+            >
+              <LocateFixed size={14} className={isLocating ? 'animate-pulse' : ''} />
+              {isLocating ? 'Ubicando...' : 'Usar mi ubicación'}
+            </button>
           </div>
 
           {/* Contenedor del mapa Leaflet */}

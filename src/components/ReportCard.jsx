@@ -3,6 +3,7 @@ import { MapPin, MessageCircle, ThumbsUp, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { StatusBadge, CategoryBadge } from './Badges';
+import { getCategoryIcon } from '../utils/categoryIcons';
 
 export default function ReportCard({ report, index = 0 }) {
   const timeAgo = formatDistanceToNow(new Date(report.created_at), { locale: es, addSuffix: true });
@@ -23,8 +24,8 @@ export default function ReportCard({ report, index = 0 }) {
           />
         </div>
       ) : (
-        <div className="aspect-[16/9] bg-gradient-to-br from-navy-800/8 to-navy-800/3 flex items-center justify-center">
-          <span className="text-4xl opacity-40">{report.category_icon || '📋'}</span>
+        <div className="aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center text-slate-300">
+          {getCategoryIcon(report.category_name || 'default', 48)}
         </div>
       )}
 
@@ -32,7 +33,7 @@ export default function ReportCard({ report, index = 0 }) {
         {/* Badges */}
         <div className="flex items-center gap-2 flex-wrap">
           {report.category_name && (
-            <CategoryBadge icon={report.category_icon} name={report.category_name} size="sm" />
+            <CategoryBadge name={report.category_name} size="sm" />
           )}
           <StatusBadge status={report.status} size="sm" />
         </div>

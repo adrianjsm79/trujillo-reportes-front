@@ -4,37 +4,45 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Sora', 'sans-serif'],
-        body:    ['Plus Jakarta Sans', 'sans-serif'],
+        display: ['Inter', 'sans-serif'],
+        body:    ['Inter', 'sans-serif'],
       },
       colors: {
         navy: {
-          950: '#060E1F',
-          900: '#0F2241',
-          800: '#1B3A6B',
-          700: '#234E8C',
-          600: '#2B62AD',
+          950: '#0B1120',
+          900: '#0F172A', // Slate 900
+          800: '#1E293B', // Slate 800
+          700: '#334155', // Slate 700
+          600: '#475569', // Slate 600
         },
-        gold: {
-          400: '#F5C842',
-          500: '#E8A820',
-          600: '#C98A10',
+        primary: {
+          50: '#EFF6FF',
+          100: '#DBEAFE',
+          200: '#BFDBFE',
+          300: '#93C5FD',
+          400: '#60A5FA', // Blue 400
+          500: '#3B82F6', // Blue 500
+          600: '#2563EB', // Blue 600
+          700: '#1D4ED8', // Blue 700
+          800: '#1E40AF',
+          900: '#1E3A8A',
+          950: '#172554',
         },
-        surface: '#F7F5F0',
+        surface: '#F8FAFC', // Slate 50
         card:    '#FFFFFF',
       },
       boxShadow: {
-        card:  '0 1px 3px rgba(15,34,65,0.06), 0 4px 16px rgba(15,34,65,0.08)',
-        hover: '0 4px 12px rgba(15,34,65,0.12), 0 12px 32px rgba(15,34,65,0.10)',
-        nav:   '0 1px 0 rgba(255,255,255,0.06), 0 4px 24px rgba(0,0,0,0.4)',
+        card:  '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        hover: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        nav:   '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
       },
       animation: {
-        'fade-up':   'fadeUp 0.4s ease both',
-        'fade-in':   'fadeIn 0.3s ease both',
+        'fade-up':   'fadeUp 0.3s ease-out both',
+        'fade-in':   'fadeIn 0.2s ease-out both',
         'pulse-dot': 'pulseDot 2s ease-in-out infinite',
       },
       keyframes: {
-        fadeUp:   { from: { opacity: 0, transform: 'translateY(12px)' }, to: { opacity: 1, transform: 'none' } },
+        fadeUp:   { from: { opacity: 0, transform: 'translateY(8px)' }, to: { opacity: 1, transform: 'none' } },
         fadeIn:   { from: { opacity: 0 }, to: { opacity: 1 } },
         pulseDot: { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.3 } },
       },

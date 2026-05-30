@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { StatusBadge, CategoryBadge } from '../components/Badges';
 import CommentSection from '../components/CommentSection';
 import { createReportIcon, STATUS_COLORS, addTileLayer } from '../hooks/useLeafletMap';
+import { getCategoryIcon } from '../utils/categoryIcons';
 
 export default function ReportDetail() {
   const { id }                  = useParams();
@@ -131,13 +132,13 @@ export default function ReportDetail() {
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <StatusBadge status={report.status} />
               {report.category_name && (
-                <CategoryBadge icon={report.category_icon} name={report.category_name} />
+                <CategoryBadge name={report.category_name} />
               )}
             </div>
-            <h1 className="font-display font-bold text-2xl sm:text-3xl text-navy-900 leading-tight mb-3">
+            <h1 className="font-display font-bold text-2xl sm:text-3xl text-slate-900 leading-tight mb-3">
               {report.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-4 text-sm text-navy-800/50 font-body">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 font-body">
               <span className="flex items-center gap-1.5">
                 <User size={13} />
                 {report.is_anonymous ? 'Anónimo' : (report.author_username || 'Usuario')}
@@ -156,22 +157,22 @@ export default function ReportDetail() {
 
           {/* Descripción */}
           <div className="card p-6">
-            <h2 className="font-display font-bold text-base text-navy-900 mb-3">Descripción del problema</h2>
-            <p className="font-body text-navy-800/80 leading-relaxed whitespace-pre-line">
+            <h2 className="font-display font-semibold text-base text-slate-800 mb-3">Descripción del problema</h2>
+            <p className="font-body text-slate-600 leading-relaxed whitespace-pre-line">
               {report.description}
             </p>
           </div>
 
           {/* Respuesta oficial */}
           {report.official_response && (
-            <div className="bg-navy-800 rounded-2xl p-6">
+            <div className="bg-slate-800 rounded-lg p-6">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-full bg-gold-500 flex items-center justify-center">
-                  <span className="text-navy-900 text-xs font-bold">M</span>
+                <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">M</span>
                 </div>
-                <span className="font-display font-semibold text-gold-400 text-sm">Respuesta Oficial</span>
+                <span className="font-display font-semibold text-primary-400 text-sm">Respuesta Oficial</span>
                 {report.assigned_to && (
-                  <span className="text-xs text-white/40 font-body">— {report.assigned_to}</span>
+                  <span className="text-xs text-slate-400 font-body">— {report.assigned_to}</span>
                 )}
               </div>
               <p className="text-white/85 font-body text-sm leading-relaxed">{report.official_response}</p>
@@ -193,31 +194,34 @@ export default function ReportDetail() {
         <div className="space-y-4">
           {/* Votar */}
           <div className="card p-5 text-center">
-            <p className="text-xs text-navy-800/50 font-body mb-3">¿Este problema te afecta?</p>
+            <p className="text-xs text-slate-500 font-body mb-3">¿Este problema te afecta?</p>
             <button
               onClick={toggleVote}
               disabled={voting}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-display font-bold text-sm transition-all duration-200
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-md font-display font-medium text-sm transition-all duration-200
                 ${voted
-                  ? 'bg-navy-800 text-white'
-                  : 'bg-navy-800/8 text-navy-800 hover:bg-navy-800/15'}`}
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
             >
               <ThumbsUp size={16} className={voted ? 'fill-white' : ''} />
               {voted ? 'Apoyando' : 'Apoyar'} · {votes}
             </button>
-            <p className="text-[11px] text-navy-800/30 font-body mt-2">
+            <p className="text-[11px] text-slate-400 font-body mt-2">
               {votes} vecino{votes !== 1 ? 's' : ''} apoya{votes === 1 ? '' : 'n'} este reporte
             </p>
           </div>
 
           {/* Info */}
           <div className="card p-5 space-y-3">
-            <h3 className="font-display font-bold text-sm text-navy-900">Información</h3>
+            <h3 className="font-display font-semibold text-sm text-slate-800">Información</h3>
             <InfoRow label="Estado">
               <StatusBadge status={report.status} size="sm" />
             </InfoRow>
             <InfoRow label="Categoría">
-              <span className="text-sm font-body">{report.category_icon} {report.category_name || 'Sin categoría'}</span>
+              <span className="text-sm font-body flex items-center gap-1.5 text-slate-600">
+                {getCategoryIcon(report.category_name || 'default', 14)} 
+                {report.category_name || 'Sin categoría'}
+              </span>
             </InfoRow>
             <InfoRow label="Distrito">
               <span className="text-sm font-body">{report.district || 'Trujillo'}</span>
