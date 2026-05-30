@@ -83,10 +83,12 @@ export default function MapPage() {
       // Visibilidad inicial según toggle
       if (!visible[r.status]) marker.setOpacity(0);
 
+      marker.bindTooltip(r.title, { direction: 'top', offset: [0, -10] });
+
       marker.on('click', () => {
         if (!visible[r.status]) return; // ignorar click en markers ocultos
         setSelected(r);
-        map.panTo([r.latitude, r.longitude]);
+        map.panTo([r.latitude, r.longitude], { animate: true });
       });
 
       markersRef.current.push(marker);
@@ -172,7 +174,7 @@ export default function MapPage() {
 
         {/* Panel lateral: reporte seleccionado */}
         {selected && (
-          <div className="absolute top-4 right-4 w-80 card shadow-hover animate-fade-up z-[1000] overflow-hidden">
+          <div className="absolute bottom-4 left-4 right-4 sm:bottom-auto sm:top-4 sm:left-auto sm:right-4 sm:w-80 card shadow-hover animate-fade-up z-[1000] overflow-hidden">
             {selected.image_url && (
               <img
                 src={selected.image_url}
