@@ -11,12 +11,16 @@ import { StatusBadge, CategoryBadge } from './Badges';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
+
 /* ─────────────────────────────────────────────
-   Sub-componente: Carrusel de Media
+   Sub-componente: Carrusel estilo Instagram
+   - Scroll horizontal con CSS snap
+   - Swipe nativo en móvil
+   - Dots + contador estilo IG
 ───────────────────────────────────────────── */
 function MediaCarousel({ mediaList, reportId }) {
   const [active, setActive] = useState(0);
-  const videoRef = useRef(null);
+  const scrollRef = useRef(null);
 
   if (!mediaList || mediaList.length === 0) return null;
 
@@ -26,113 +30,148 @@ function MediaCarousel({ mediaList, reportId }) {
     url.endsWith('.webm') ||
     url.endsWith('.mov');
 
-  const prev = (e) => {
-    e.preventDefault();
-    setActive(a => (a === 0 ? mediaList.length - 1 : a - 1));
-  };
-  const next = (e) => {
-    e.preventDefault();
-    setActive(a => (a === mediaList.length - 1 ? 0 : a + 1));
+  // Scroll programático al hacer clic en los dots o flechas
+  const goTo = (i, e) => {
+    if (e) e.preventDefault();
+    const container = scrollRef.current;
+    if (!container) return;
+    container.scrollTo({ left: i * container.offsetWidth, behavior: 'smooth' });
+    setActive(i);
   };
 
-  const current = mediaList[active];
+  // Detectar slide activo cuando el usuario hace swipe
+  const onScroll = () => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const idx = Math.round(container.scrollLeft / container.offsetWidth);
+    if (idx !== active) setActive(idx);
+  };
 
   return (
-    <div className="relative bg-black group select-none">
-      {/* Slide principal */}
-      <div className="relative overflow-hidden" style={{ maxHeight: 480 }}>
-        {isVideo(current) ? (
-          <video
-            ref={videoRef}
-            src={current}
-            className="w-full max-h-[480px] object-contain bg-black"
-            controls
-            controlsList="nodownload"
-            playsInline
-          />
-        ) : (
-          <Link to={`/reporte/${reportId}`} className="block">
-            <img
-              src={current}
-              alt={`Imagen ${active + 1}`}
-              className="w-full max-h-[480px] object-cover hover:opacity-95 transition-opacity"
-              loading="lazy"
-            />
-          </Link>
-        )}
+    <div className="relative bg-black select-none overflow-hidden">
 
-        {/* Overlay degradado inferior */}
-        {!isVideo(current) && (
-          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-        )}
+      {/* ── Tira de slides (scroll-snap) ── */}
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        style={{
+          display: 'flex',
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          scrollSnapType: 'x mandatory',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          maxHeight: 520,
+        }}
+      >
+        {mediaList.map((url, i) => (
+          <div
+            key={i}
+            style={{
+              scrollSnapAlign: 'start',
+              flexShrink: 0,
+              width: '100%',
+              maxHeight: 520,
+            }}
+          >
+            {isVideo(url) ? (
+              <video
+                src={url}
+                className="w-full bg-black"
+                style={{ maxHeight: 520, objectFit: 'contain' }}
+                controls
+                controlsList="nodownload"
+                playsInline
+                muted
+              />
+            ) : (
+              <Link to={`/reporte/${reportId}`} className="block" tabIndex={-1}>
+                <img
+                  src={url}
+                  alt={`Imagen ${i + 1}`}
+                  className="w-full"
+                  style={{ maxHeight: 520, objectFit: 'cover' }}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  draggable={false}
+                />
+              </Link>
+            )}
+          </div>
+        ))}
       </div>
 
-      {/* Controles de navegación (solo si hay más de 1) */}
+      {/* Ocultar scrollbar WebKit */}
+      <style>{`.ig-scroll::-webkit-scrollbar{display:none}`}</style>
+
+      {/* ── Contador estilo IG: "2 / 4" ── */}
       {mediaList.length > 1 && (
-        <>
-          <button
-            onClick={prev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm z-10"
-            aria-label="Anterior"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            onClick={next}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm z-10"
-            aria-label="Siguiente"
-          >
-            <ChevronRight size={20} />
-          </button>
-
-          {/* Indicadores de puntos */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-            {mediaList.map((_, i) => (
-              <button
-                key={i}
-                onClick={(e) => { e.preventDefault(); setActive(i); }}
-                className={`rounded-full transition-all ${i === active ? 'w-5 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/80'}`}
-              />
-            ))}
-          </div>
-
-          {/* Contador */}
-          <div className="absolute top-3 right-3 bg-black/50 text-white text-xs font-medium px-2 py-1 rounded-full backdrop-blur-sm z-10">
-            {active + 1} / {mediaList.length}
-          </div>
-        </>
-      )}
-
-      {/* Indicador de video */}
-      {isVideo(current) && mediaList.length === 1 && (
-        <div className="absolute top-3 left-3 bg-black/60 text-white text-xs flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm">
-          <Play size={10} className="fill-white" /> Video
+        <div
+          className="absolute top-3 right-3 text-white text-xs font-semibold px-2.5 py-1 rounded-full z-20"
+          style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+        >
+          {active + 1} / {mediaList.length}
         </div>
       )}
 
-      {/* Miniaturas (si hay 2-4 archivos) */}
-      {mediaList.length > 1 && mediaList.length <= 4 && (
-        <div className="flex gap-1 p-1 bg-black">
-          {mediaList.map((url, i) => (
+      {/* ── Badge video ── */}
+      {isVideo(mediaList[active]) && (
+        <div
+          className="absolute top-3 left-3 text-white text-xs flex items-center gap-1 px-2 py-1 rounded-full z-20"
+          style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+        >
+          <Play size={9} className="fill-white" /> Video
+        </div>
+      )}
+
+      {/* ── Dots estilo Instagram ── */}
+      {mediaList.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20" style={{ transform: 'translateX(-50%)' }}>
+          {mediaList.map((_, i) => (
             <button
               key={i}
-              onClick={(e) => { e.preventDefault(); setActive(i); }}
-              className={`relative flex-1 aspect-square rounded overflow-hidden transition-all ${i === active ? 'ring-2 ring-white opacity-100' : 'opacity-50 hover:opacity-75'}`}
-            >
-              {isVideo(url) ? (
-                <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                  <Play size={16} className="text-white fill-white" />
-                </div>
-              ) : (
-                <img src={url} alt="" className="w-full h-full object-cover" />
-              )}
-            </button>
+              onClick={(e) => goTo(i, e)}
+              aria-label={`Ir a imagen ${i + 1}`}
+              style={{
+                borderRadius: '999px',
+                transition: 'all 0.2s',
+                width:  i === active ? 18 : 6,
+                height: 6,
+                background: i === active ? '#fff' : 'rgba(255,255,255,0.4)',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            />
           ))}
         </div>
+      )}
+
+      {/* ── Flechas laterales (solo en los extremos) ── */}
+      {mediaList.length > 1 && active > 0 && (
+        <button
+          onClick={(e) => goTo(active - 1, e)}
+          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 text-white rounded-full flex items-center justify-center z-20 shadow-lg transition-all hover:scale-110"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', transform: 'translateY(-50%)' }}
+          aria-label="Anterior"
+        >
+          <ChevronLeft size={18} />
+        </button>
+      )}
+      {mediaList.length > 1 && active < mediaList.length - 1 && (
+        <button
+          onClick={(e) => goTo(active + 1, e)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 text-white rounded-full flex items-center justify-center z-20 shadow-lg transition-all hover:scale-110"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', transform: 'translateY(-50%)' }}
+          aria-label="Siguiente"
+        >
+          <ChevronRight size={18} />
+        </button>
       )}
     </div>
   );
 }
+
 
 /* ─────────────────────────────────────────────
    Sub-componente: Placeholder sin imagen
