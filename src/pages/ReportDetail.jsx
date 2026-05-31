@@ -5,7 +5,7 @@ import {
   ExternalLink, Calendar, Eye, MessageSquare, Building2,
   Share2, Check, ChevronLeft, ChevronRight, Play,
   AlertCircle, CheckCircle2, Loader2, XCircle,
-  Navigation
+  Navigation, Flame, Camera, Phone
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -13,8 +13,11 @@ import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { StatusBadge, CategoryBadge } from '../components/Badges';
 import CommentSection from '../components/CommentSection';
+import ActivityTimeline from '../components/ActivityTimeline';
 import { createReportIcon, STATUS_COLORS, addTileLayer } from '../hooks/useLeafletMap';
 import { getCategoryIcon } from '../utils/categoryIcons';
+
+const URGENCY_THRESHOLD = 5;
 
 /* ─────────────────────────────────────────────
    Carrusel de media (reutilizado de FeedPost)
@@ -252,15 +255,51 @@ export default function ReportDetail() {
 
   const shareReport = async () => {
     const url = window.location.href;
+
+    // Función de copia robusta: funciona en HTTP, HTTPS y todos los navegadores
+    const copyToClipboard = (text) => {
+      // Intento 1: Clipboard API moderna (requiere HTTPS)
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text)
+          .then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); })
+          .catch(() => copyViaExecCommand(text));
+      }
+      // Intento 2: execCommand clásico (funciona en HTTP también)
+      copyViaExecCommand(text);
+    };
+
+    const copyViaExecCommand = (text) => {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch (e) {
+        // Último recurso: mostrar la URL para que el usuario la copie manualmente
+        prompt('Copia este enlace:', text);
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    };
+
+    // navigator.share (solo móvil/HTTPS)
     if (navigator.share) {
-      try { await navigator.share({ title: report.title, text: report.description, url }); }
-      catch (_) {}
-    } else {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      try {
+        await navigator.share({ title: report.title, text: report.description, url });
+        return; // Si share funcionó, no necesitamos copiar
+      } catch (_) {
+        // El usuario canceló el share nativo — fallback a copiar
+      }
     }
+
+    copyToClipboard(url);
   };
+
 
   // ─── Loading skeleton ───
   if (loading) return (
@@ -359,6 +398,11 @@ export default function ReportDetail() {
                 <span className="flex items-center gap-1"><Eye size={13} /> {report.view_count || 0} vistas</span>
                 <span className="flex items-center gap-1"><MessageSquare size={13} /> {report.comment_count || 0} comentarios</span>
                 <span className="flex items-center gap-1"><ThumbsUp size={13} /> {votes} apoyos</span>
+                {votes >= URGENCY_THRESHOLD && (
+                  <span className="ml-auto flex items-center gap-1 text-red-500 font-bold text-xs bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                    <Flame size={11} className="fill-red-500" /> URGENTE
+                  </span>
+                )}
               </div>
             </div>
 
@@ -368,7 +412,7 @@ export default function ReportDetail() {
               <StatusTimeline status={report.status} />
               {report.status === 'pending' && (
                 <p className="text-xs text-slate-400 mt-3 text-center">
-                  Pendiente de revisión por la municipalidad. Tu reporte ayuda a priorizar.
+                  Pendiente de revisión por la municipalidad. Tu apoyo ayuda a priorizar.
                 </p>
               )}
               {report.status === 'in_progress' && (
@@ -417,6 +461,47 @@ export default function ReportDetail() {
                 )}
               </div>
             )}
+
+            {/* ── Galería de evidencia de resolución ── */}
+            {report.resolution_media && report.resolution_media.length > 0 && (
+              <div className="bg-white rounded-2xl border border-emerald-200 p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <Camera size={15} className="text-emerald-600" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-slate-800 text-sm">Evidencia de resolución</h2>
+                    <p className="text-xs text-emerald-600">Fotos del trabajo realizado por la municipalidad</p>
+                  </div>
+                </div>
+                <div className={`grid gap-2 ${
+                  report.resolution_media.length === 1 ? 'grid-cols-1' :
+                  report.resolution_media.length === 2 ? 'grid-cols-2' :
+                  'grid-cols-2 sm:grid-cols-3'
+                }`}>
+                  {report.resolution_media.map((url, i) => (
+                    <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                      className="block aspect-square rounded-xl overflow-hidden bg-slate-100 hover:opacity-90 transition-opacity">
+                      <img src={url} alt={`Evidencia ${i + 1}`}
+                        className="w-full h-full object-cover" loading="lazy" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Timeline de actividad ── */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <span className="w-1 h-4 bg-primary-500 rounded-full inline-block" />
+                <h2 className="font-semibold text-slate-800 text-sm">Historial de actividad</h2>
+              </div>
+              <ActivityTimeline
+                reportId={id}
+                createdAt={report.created_at}
+                assignedTo={report.assigned_to}
+              />
+            </div>
 
             {/* Comentarios */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">

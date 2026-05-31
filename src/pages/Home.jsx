@@ -6,9 +6,10 @@ import {
 } from 'lucide-react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import FeedPost   from '../components/FeedPost';
-import FilterBar  from '../components/FilterBar';
-import Pagination from '../components/Pagination';
+import FeedPost      from '../components/FeedPost';
+import FilterBar     from '../components/FilterBar';
+import Pagination    from '../components/Pagination';
+import UrgentReports from '../components/UrgentReports';
 
 export default function Home() {
   const { user } = useAuth();
@@ -111,6 +112,9 @@ export default function Home() {
 
           {/* ── FEED (columna principal) ── */}
           <div className="flex-1 min-w-0">
+            {/* Reportes Urgentes */}
+            <UrgentReports threshold={1} />
+
             {/* Filtros */}
             <div className="mb-5">
               <FilterBar filters={filters} onChange={setFilters} />

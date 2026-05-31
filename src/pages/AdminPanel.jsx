@@ -4,6 +4,7 @@ import {
   LayoutDashboard, FileText, Users, BarChart2, CheckCircle,
   Clock, AlertTriangle, XCircle, ChevronDown, Search,
   ExternalLink, RefreshCw, UserCog, MapPin, TrendingUp,
+  Camera, Flame, Upload
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -309,7 +310,12 @@ function ReportsTab() {
                       </td>
                       <td className="px-4 py-3"><StatusBadge status={r.status} size="sm" /></td>
                       <td className="px-4 py-3 text-xs text-navy-800/70 font-body whitespace-nowrap">{r.district || '—'}</td>
-                      <td className="px-4 py-3 text-xs font-display font-semibold text-navy-800">{r.vote_count}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs font-display font-bold ${r.vote_count >= 5 ? 'text-red-600' : 'text-navy-800'}`}>
+                          {r.vote_count >= 5 && <Flame size={11} className="inline fill-red-400 mr-0.5" />}
+                          {r.vote_count}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">
                         <select className="input h-7 text-[11px] py-0 min-w-44"
                           value={r.assigned_to || ''}
@@ -340,23 +346,29 @@ function ReportsTab() {
                     {active === r.id && (
                       <tr key={`${r.id}-panel`} className="bg-navy-800/2">
                         <td colSpan={7} className="px-6 py-4">
-                          <div className="flex flex-wrap items-center gap-3">
-                            <span className="text-xs font-display font-semibold text-navy-800/60">Cambiar estado:</span>
-                            {Object.entries(STATUS_LABELS).map(([val, label]) => (
-                              <button key={val}
-                                disabled={r.status === val}
-                                onClick={() => updateStatus(r.id, val)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-display font-semibold transition-all border
-                                  ${r.status === val
-                                    ? 'bg-navy-800 text-white border-navy-800 cursor-default'
-                                    : 'bg-white text-navy-700 border-navy-800/15 hover:border-navy-800/40'}`}>
-                                {label}
-                              </button>
-                            ))}
-                            <Link to={`/reporte/${r.id}`} target="_blank"
-                              className="ml-auto text-xs font-display font-semibold text-navy-700 hover:text-navy-900 flex items-center gap-1 transition-colors">
-                              Ver reporte completo <ExternalLink size={11} />
-                            </Link>
+                          <div className="space-y-3">
+                            {/* Cambiar estado */}
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className="text-xs font-display font-semibold text-navy-800/60">Cambiar estado:</span>
+                              {Object.entries(STATUS_LABELS).map(([val, label]) => (
+                                <button key={val}
+                                  disabled={r.status === val}
+                                  onClick={() => updateStatus(r.id, val)}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-display font-semibold transition-all border
+                                    ${r.status === val
+                                      ? 'bg-navy-800 text-white border-navy-800 cursor-default'
+                                      : 'bg-white text-navy-700 border-navy-800/15 hover:border-navy-800/40'}`}>
+                                  {label}
+                                </button>
+                              ))}
+                              <Link to={`/reporte/${r.id}`} target="_blank"
+                                className="ml-auto text-xs font-display font-semibold text-navy-700 hover:text-navy-900 flex items-center gap-1 transition-colors">
+                                Ver reporte <ExternalLink size={11} />
+                              </Link>
+                            </div>
+
+                            {/* Subir evidencia de resolución */}
+                            <ResolutionUploader reportId={r.id} />
                           </div>
                         </td>
                       </tr>
@@ -509,6 +521,56 @@ function UsersTab() {
       </div>
 
       <Pagination page={page} totalPages={pagination.total_pages} onChange={setPage} />
+    </div>
+  );
+}
+
+// ── RESOLUTION UPLOADER ───────────────────────────────────
+function ResolutionUploader({ reportId }) {
+  const [files,     setFiles]     = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [done,      setDone]      = useState(false);
+  const [error,     setError]     = useState('');
+
+  async function handleUpload() {
+    if (!files.length) return;
+    setUploading(true);
+    setError('');
+    try {
+      await api.admin.uploadResolutionMedia(reportId, files);
+      setDone(true);
+      setFiles([]);
+    } catch (e) {
+      setError(e.message || 'Error al subir');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  if (done) return (
+    <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold">
+      <CheckCircle size={14} /> Evidencia de resolución subida correctamente
+    </div>
+  );
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <span className="text-xs font-display font-semibold text-navy-800/60 flex items-center gap-1">
+        <Camera size={12} /> Evidencia de resolución:
+      </span>
+      <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700 cursor-pointer hover:bg-emerald-100 transition-colors">
+        <Upload size={11} />
+        {files.length ? `${files.length} archivo(s) seleccionado(s)` : 'Seleccionar fotos'}
+        <input type="file" multiple accept="image/*,video/*" className="hidden"
+          onChange={e => setFiles(Array.from(e.target.files))} />
+      </label>
+      {files.length > 0 && (
+        <button onClick={handleUpload} disabled={uploading}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50">
+          {uploading ? 'Subiendo…' : 'Subir evidencia'}
+        </button>
+      )}
+      {error && <span className="text-xs text-red-600">{error}</span>}
     </div>
   );
 }

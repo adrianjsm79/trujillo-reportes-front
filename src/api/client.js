@@ -38,9 +38,7 @@ export const api = {
     delete: (id)          => request(`/api/reports/${id}`, { method: 'DELETE' }),
     uploadMedia: (id, files) => {
       const form = new FormData();
-      for (let i = 0; i < files.length; i++) {
-        form.append('media', files[i]);
-      }
+      for (let i = 0; i < files.length; i++) form.append('media', files[i]);
       const token = getToken();
       return fetch(`${BASE_URL}/api/reports/${id}/media`, {
         method: 'POST',
@@ -48,6 +46,8 @@ export const api = {
         body: form,
       }).then(r => r.json()).then(d => { if (!d.success) throw new Error(d.error); return d.data; });
     },
+    top:     (limit = 5) => request(`/api/reports/top?limit=${limit}`),
+    history: (id)        => request(`/api/reports/${id}/history`),
   },
 
   // ── Comentarios ─────────────────────────────────────────
@@ -79,5 +79,15 @@ export const api = {
     setRole:       (id, role)   => request(`/api/admin/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),
     setActive:     (id, active) => request(`/api/admin/users/${id}/active`, { method: 'PUT', body: JSON.stringify({ is_active: active }) }),
     areas:         ()           => request('/api/admin/areas'),
+    uploadResolutionMedia: (id, files) => {
+      const form = new FormData();
+      for (let i = 0; i < files.length; i++) form.append('media', files[i]);
+      const token = getToken();
+      return fetch(`${BASE_URL}/api/reports/${id}/resolution-media`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      }).then(r => r.json()).then(d => { if (!d.success) throw new Error(d.error); return d.data; });
+    },
   },
 };

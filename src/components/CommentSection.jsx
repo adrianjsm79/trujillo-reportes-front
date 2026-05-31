@@ -1,9 +1,25 @@
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Send, Trash2, ShieldCheck } from 'lucide-react';
+import { Send, Trash2, ShieldCheck, AtSign } from 'lucide-react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+
+const AREAS = [
+  '@Serenazgo', '@ObrasPublicas', '@MedioAmbiente',
+  '@SEDALIB', '@Hidrandina', '@Transporte', '@Municipalidad'
+];
+
+// Resalta @menciones en texto plano
+function renderWithMentions(text) {
+  if (!text) return null;
+  const parts = text.split(/(@[A-Za-zá-úÁ-ÚñÑ]+)/g);
+  return parts.map((part, i) =>
+    AREAS.some(a => a.toLowerCase() === part.toLowerCase())
+      ? <span key={i} className="text-primary-600 font-semibold bg-primary-50 rounded px-1">{part}</span>
+      : part
+  );
+}
 
 export default function CommentSection({ reportId }) {
   const { user } = useAuth();
@@ -94,7 +110,7 @@ export default function CommentSection({ reportId }) {
                 </div>
               </div>
               <p className={`text-sm font-body leading-relaxed ${c.is_official ? 'text-white/90' : 'text-navy-800/80'}`}>
-                {c.content}
+                {renderWithMentions(c.content)}
               </p>
             </div>
           ))}
@@ -103,18 +119,23 @@ export default function CommentSection({ reportId }) {
 
       {/* Formulario */}
       {user ? (
-        <form onSubmit={submit} className="flex gap-2 pt-2">
-          <input
-            className="input flex-1"
-            placeholder="Escribe un comentario..."
-            value={text}
-            onChange={e => setText(e.target.value)}
-            maxLength={1000}
-          />
-          <button type="submit" disabled={!text.trim() || sending} className="btn-primary px-4 disabled:opacity-50">
-            <Send size={15} />
-          </button>
-        </form>
+        <div className="pt-2 space-y-2">
+          <p className="text-[11px] text-slate-400 flex items-center gap-1">
+            <AtSign size={10} /> Puedes mencionar áreas: {AREAS.slice(0, 4).join(', ')}...
+          </p>
+          <form onSubmit={submit} className="flex gap-2">
+            <input
+              className="input flex-1"
+              placeholder="Escribe un comentario... (@Serenazgo, @ObrasPublicas)"
+              value={text}
+              onChange={e => setText(e.target.value)}
+              maxLength={1000}
+            />
+            <button type="submit" disabled={!text.trim() || sending} className="btn-primary px-4 disabled:opacity-50">
+              <Send size={15} />
+            </button>
+          </form>
+        </div>
       ) : (
         <p className="text-sm text-navy-800/50 font-body">
           <a href="/login" className="text-navy-800 font-semibold underline underline-offset-2">Inicia sesión</a> para comentar.

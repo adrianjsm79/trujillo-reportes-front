@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Plus, Menu, X, User, LogOut, LayoutDashboard, FileText, ChevronDown } from 'lucide-react';
+import { MapPin, Plus, Menu, X, User, LogOut, LayoutDashboard, FileText, ChevronDown, Phone } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout, isAuthority } = useAuth();
@@ -37,8 +37,9 @@ export default function Navbar() {
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
-            <NavLink to="/"     className={({ isActive }) => `${navLink} ${isActive ? active : inactive}`}>Reportes</NavLink>
-            <NavLink to="/mapa" className={({ isActive }) => `${navLink} ${isActive ? active : inactive}`}>Mapa</NavLink>
+            <NavLink to="/"        className={({ isActive }) => `${navLink} ${isActive ? active : inactive}`}>Reportes</NavLink>
+            <NavLink to="/mapa"    className={({ isActive }) => `${navLink} ${isActive ? active : inactive}`}>Mapa</NavLink>
+            <NavLink to="/contacto" className={({ isActive }) => `${navLink} ${isActive ? active : inactive}`}>Contacto</NavLink>
             {isAuthority && (
               <NavLink to="/admin" className={({ isActive }) => `${navLink} ${isActive ? active : inactive}`}>Panel Admin</NavLink>
             )}
@@ -104,8 +105,9 @@ export default function Navbar() {
       {open && (
         <div className="md:hidden bg-navy-950 border-t border-white/5 animate-fade-in">
           <div className="px-4 py-4 space-y-1">
-            <MobileLink to="/"     onClick={() => setOpen(false)}>Reportes</MobileLink>
-            <MobileLink to="/mapa" onClick={() => setOpen(false)}>Mapa</MobileLink>
+            <MobileLink to="/"        onClick={() => setOpen(false)}>Reportes</MobileLink>
+            <MobileLink to="/mapa"     onClick={() => setOpen(false)}>Mapa</MobileLink>
+            <MobileLink to="/contacto" onClick={() => setOpen(false)}>Contacto</MobileLink>
             {isAuthority && <MobileLink to="/admin" onClick={() => setOpen(false)}>Panel Admin</MobileLink>}
             <div className="pt-3 pb-1 flex flex-col gap-2">
               {user ? (

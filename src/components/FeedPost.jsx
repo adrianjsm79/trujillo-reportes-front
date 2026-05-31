@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   MessageCircle, ThumbsUp, MapPin, Share2, MoreHorizontal,
   User, ChevronLeft, ChevronRight, Play, ExternalLink, Navigation,
-  CheckCircle, Copy, Check
+  CheckCircle, Copy, Check, Flame
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -290,16 +290,41 @@ export default function FeedPost({ report, index = 0 }) {
   /* ── Compartir ── */
   const share = async () => {
     const url = `${window.location.origin}/reporte/${report.id}`;
+
+    const copyViaExecCommand = (text) => {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch (e) {
+        prompt('Copia este enlace:', text);
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    };
+
     if (navigator.share) {
       try {
         await navigator.share({ title: report.title, text: report.description, url });
+        return;
       } catch (_) {}
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url)
+        .then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); })
+        .catch(() => copyViaExecCommand(url));
     } else {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      copyViaExecCommand(url);
     }
   };
+
 
   const statusColors = {
     pending:     'bg-amber-50 border-amber-200 text-amber-700',
@@ -344,6 +369,11 @@ export default function FeedPost({ report, index = 0 }) {
 
         {/* Badge de estado inline (top right) */}
         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+          {voteCount >= 5 && (
+            <span className="flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+              <Flame size={9} className="fill-red-400" /> URGENTE
+            </span>
+          )}
           <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[report.status] || statusColors.pending}`}>
             {report.status === 'pending' ? 'Pendiente' :
              report.status === 'in_progress' ? 'En proceso' :

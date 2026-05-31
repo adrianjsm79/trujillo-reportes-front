@@ -9,6 +9,7 @@ import Login        from './pages/Login';
 import Register     from './pages/Register';
 import MyReports    from './pages/MyReports';
 import AdminPanel   from './pages/AdminPanel';
+import ContactPage  from './pages/ContactPage';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/login"    element={<Login />} />
           <Route path="/registro" element={<Register />} />
           <Route path="/nuevo"    element={<CreateReport />} />
+          <Route path="/contacto" element={<ContactPage />} />
           <Route path="/mis-reportes" element={<PrivateRoute><MyReports /></PrivateRoute>} />
           <Route path="/admin"    element={<AdminRoute><AdminPanel /></AdminRoute>} />
           <Route path="*"         element={<Navigate to="/" replace />} />
