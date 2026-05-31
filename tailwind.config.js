@@ -1,6 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  safelist: [
+    'bg-white/8', 'bg-white/15', 'border-white/8',
+    'bg-amber-500/10', 'bg-blue-500/10', 'bg-emerald-500/10', 'bg-primary-500/10',
+  ],
   theme: {
     extend: {
       fontFamily: {
